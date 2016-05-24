@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 
-{% for alojamiento in alojamientos %}
+{% for alojamiento, imagen in alojamientos %}
 <service>
+	<hotel>
 		<basicData>
 				<name>
 					{{alojamiento.nombre}}
@@ -19,14 +20,19 @@
 				<web>{{alojamiento.web}}</web>
 		</basicData>
 
+		<geoData>
+				<address>{{alojamiento.direccion}}</address>
+		</geoData>
+
 		<multimedia>
 			<media type="image">
 				<description/>
 				<url>
-
+					{{imagen}}
 				</url>
 			</media>
 		</multimedia>
+
 		<extradata>
 			<categorias>
 				<categoria>
@@ -39,5 +45,6 @@
 				</categoria>
 			</categorias>
 		</extradata>
+	</hotel>
 </service>
 {% endfor %}

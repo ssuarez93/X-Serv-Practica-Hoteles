@@ -34,8 +34,10 @@ def login_correcto(request):
     return HttpResponseRedirect("/" + nombre)
 
 
+# Muestra la pagina de un usuario
 @csrf_exempt
 def profile(request, user):
+    # Para saber si muestro los 10 primeros, del 10 al 20 o qué hoteles escogidos
     try:
         offset = int(request.GET.get('offset'))
     except TypeError:
@@ -48,6 +50,7 @@ def profile(request, user):
     if titulo == "Pagina de":
         titulo = "Pagina de " + str(user)
 
+    # Muestro hoteles escogidos por el usuario, si está logueado podrá cambiar color, letra y titulo
     if request.method == "GET":
         escogidos = AlojamientoEscogido.objects.filter(user=user)
         respuesta = ""
@@ -60,12 +63,13 @@ def profile(request, user):
                         '<img src="' + imagenes.url1 + '"width="200" height="150" border="2">' + \
                         "</br>" + alojamiento.direccion + "</br>" + "<a href='/" + "alojamientos/" + \
                         str(alojamiento.id) + "'>Mas informacion</a></br></br>"
+        # Para mostrar enlace a los 10 siguientes
         contador = 0
         for escogido in escogidos:
             contador = contador +1
         for n in range (0, int(math.ceil(float(contador)/10.0))):
             respuesta += "<a href='" + str(user) + "?offset=" + str(n) + "'>" + str(n+1) + " " + "</a>"
-
+        # Para mostrar formularios si está autenticado y es su pagina
         if request.user.is_authenticated():
             if str(request.user.username) == str(user):
                 contenido = "<p>Bienvenido, esta dentro de su pagina de usuario.<p>"
@@ -77,6 +81,7 @@ def profile(request, user):
             contenido = "<p>Estos son los alojamientos escogidos por este usuario: <p>"
             contenido += respuesta
 
+    # Si es su pagina y está autenticado, recibo los datos de los cambios que quiere hacer u hotel escogido
     elif request.method == "POST":
         usuario = ConfiguracionUsuario.objects.get(user=user)
         id_usuario = usuario.id
@@ -100,6 +105,7 @@ def profile(request, user):
     else:
         contenido = "Ha ocurrido un error con el metodo usado"
 
+    # Para pasar los datos del menu de navegacion asi como el estilo de la pagina escogida
     navegacion = Menu(False)
     try:
         usuarios = ConfiguracionUsuario.objects.all()
@@ -119,14 +125,14 @@ def profile(request, user):
     return HttpResponse(rendered)
 
 
-
+# Pagina principal con los hoteles con mas comentarios
 def principal(request):
     try:
         offset = int(request.GET.get('offset'))
     except TypeError:
         offset = 0
     num = int(offset)*10
-    form_act = FormActualizar()
+    form_act = FormActualizar()   # Actuallizar alojamientos
 
     if request.method == "GET":
         try:
@@ -136,12 +142,12 @@ def principal(request):
             for alojamiento in lista_alojamientos[num:num+10]:
                 if int(alojamiento.num_comentarios) > 0:
                     imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
-                #    web = unicode.encode(alojamiento.web)
                     respuesta += "</br>" + "<a href='" + str(alojamiento.web) + "'>" + \
                                 "</br>" + str(alojamiento.nombre) + "</a>" + "</br>" + \
                                 '<img src="' + imagenes.url1 + '"width="200" height="150" border="2">' + \
                                 "</br>" + alojamiento.direccion + "</br>" + "<a href='/" + "alojamientos/" + \
                                 str(alojamiento.id) + "'>Mas informacion</a></br>"
+            # Para mostrar enlace a los 10 siguientes
             contador = 0
             for alojamiento in lista_alojamientos:
                 if alojamiento.num_comentarios > 0:
@@ -152,6 +158,7 @@ def principal(request):
         except Alojamiento.DoesNotExist:
             respuesta = ("No hay alojamientos disponibles, debe usted actualizar dichos alojamientos")
 
+        # Para pasar los datos del menu de navegacion asi como el estilo de la pagina escogida
         navegacion = Menu(True)
         try:
             usuarios = ConfiguracionUsuario.objects.all()
@@ -169,8 +176,7 @@ def principal(request):
     return HttpResponse(rendered)
 
 
-# AnonymousUser
-
+# Muestra todos los alojamientos de la base de datos y permite filtrar or categorias
 @csrf_exempt
 def alojamientos(request):
     titulo = ("Lista de todos los alojamientos de Madrid: ")
@@ -178,6 +184,7 @@ def alojamientos(request):
     form_filtrar = FormFiltrar()
     form_act = FormActualizar()
     contenido = form_filtrar + form_act
+
     if request.method == "GET":
         try:
             lista_alojamientos = Alojamiento.objects.all()
@@ -190,13 +197,14 @@ def alojamientos(request):
         except Alojamiento.DoesNotExist:
             contenido = ("No hay alojamientos disponibles, debe usted actualizar dichos alojamientos")
 
+    # Si se ha filtrado o actualizado
     elif request.method == "POST":
         contenido = form_filtrar + form_act
-
+        # Filtro los alojamientos
         if request.POST.get("tipo") == "Filtrar":
             alojamientos, num = FiltrarAlojamientos(request)   # Filtro alojamientos
             contenido += ImprimirAloj(request, alojamientos, num)  # Imprimo los alojamientos
-
+        # Guardo los alojamientos
         elif request.POST.get("tipo") == "actualizar":
             lista_alojamientos = xml_parser.parse(1) # Por defecto, 1 es español, 2 es inglés y 3 es francés
             for alojamiento in lista_alojamientos:
@@ -209,7 +217,7 @@ def alojamientos(request):
                                         web=alojamiento['web'], direccion=direc,
                                         categoria=alojamiento['Categoria'], subcategoria=alojamiento['SubCategoria'])
                 alojamiento_nuevo.save()
-
+                # Guardo 5 imagenes
                 imagen1, imagen2, imagen3, imagen4, imagen5 = ('', '', '', '', '')
                 try:
                     imagenes = alojamiento['imagenes']
@@ -230,6 +238,7 @@ def alojamientos(request):
     else:
         contenido = "ERROR"
 
+    # Para pasar los datos del menu de navegacion asi como el estilo de la pagina escogida
     navegacion = Menu(False)
     try:
         usuarios = ConfiguracionUsuario.objects.all()
@@ -246,7 +255,7 @@ def alojamientos(request):
     return HttpResponse(rendered)
 
 
-
+# Muestra la informacion de un alojamiento concreto
 @csrf_exempt
 def aloj_id(request, id):
     form_coment = FormComent(request.user.username, id)
@@ -257,7 +266,7 @@ def aloj_id(request, id):
         titulo = alojamiento.nombre
         imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
         comentarios = Comentario.objects.all()
-
+        # Muestro todas las imagenes
         if unicode.encode(imagenes.url1) != "":
             respuesta = '<br>' + '<img src="' + imagenes.url1 + '"width="400" height="300" border="7">'
         if unicode.encode(imagenes.url2) != "":
@@ -272,7 +281,7 @@ def aloj_id(request, id):
         contenido = ("No se encuentra dicho alojamienta")
     except Imagenes.DoesNotExist:
         None
-
+    # Al ser visitado el alojamiento, aumento en 1 el numero de visitas que tiene
     if request.method == "GET":
         num_visitas = alojamiento.num_visitas+1
         guardar_alojamiento = Alojamiento(id= id, nombre=alojamiento.nombre, email=alojamiento.email,
@@ -281,17 +290,18 @@ def aloj_id(request, id):
                                         categoria=alojamiento.categoria, subcategoria=alojamiento.subcategoria,
                                         num_visitas=num_visitas, num_comentarios=alojamiento.num_comentarios)
         guardar_alojamiento.save()
-
+        # Muestro toda la informacion del hotel
         contenido = alojamiento.descripcion + \
                     alojamiento.direccion + '</br>' + \
                     '<br>' + str(alojamiento.telefono) + '</br>' + "<a href='" + \
                     str(alojamiento.web) + "'>" + str(alojamiento.web) + "</a>"
-
+        # Añado imagenes a la respuesta y el formulario del idioma
         contenido += respuesta + form_idioma
         alojamiento = Alojamiento.objects.get(id=id)
         if request.user.is_authenticated():
             contenido += FormEscogerAloj()
         contenido += '<br>' + str(num_visitas) + " visitas" + "<br><br>Comentarios: </br>"
+        # Muestro comentarios
         for comentario in comentarios:
             if int(comentario.alojamiento_id) == int(id):
                 contenido += '<br>' + str(comentario.fecha) + ": " + str(comentario.contenido) + '</br>'
@@ -300,7 +310,7 @@ def aloj_id(request, id):
 
     elif request.method == "POST":
         alojamiento = Alojamiento.objects.get(id=id)
-
+        # Almaceno elcomentario recibido
         if request.POST.get("tipo") == "comentario":
             coment = request.POST.get("mensaje")
             fecha = str(datetime.now())
@@ -319,7 +329,7 @@ def aloj_id(request, id):
 
             contenido = "Comentario realizado correctamente" + \
                         '<meta http-equiv="refresh" content="2;url=' '" />'
-
+        # Almaceno el alojamiento en la pagina del usuario que lo ha escogido
         elif request.POST.get("tipo") == "escoger":
             user = request.user.username
             aloj_id = id
@@ -334,19 +344,19 @@ def aloj_id(request, id):
                 escogido_nuevo.save()
                 contenido = "Alojamiento escogido correctamente" + \
                             '<meta http-equiv="refresh" content="1;url=' '" />'
-
+        # Para mostrar la informacion en otro idioma
         elif request.POST.get("tipo") == "idioma":
             idioma =  request.POST.get("Idioma")
             alojamiento = Alojamiento.objects.get(id=id)
             nombre = alojamiento.nombre
             (nombre, direc, email, telefono, descripcion, web) = EnOtroIdioma(nombre, int(idioma))
-            if nombre != "error":
+            if nombre != "error":  # Si el nombre es error es porque la informacion no esta en frances
                 contenido = descripcion + direc + '</br>' + \
                             '<br>' + str(telefono) + '</br>' + "<a href='" + \
                             str(web) + "'>" + str(web) + "</a>"
             else:
                 contenido = "<h4>No se dispone de la informacion de este alojamiento en frances</h4>"
-
+            # Muestro comentarios.  Si esta logueado, form para comentar y escoger
             contenido += respuesta + form_idioma
             if request.user.is_authenticated():
                 contenido += FormEscogerAloj()
@@ -372,13 +382,14 @@ def aloj_id(request, id):
     try:
         user = ConfiguracionUsuario.objects.get(user=request.user)
         color = user.color
+        letra = user.letra
     except ConfiguracionUsuario.DoesNotExist:
         None
     rendered = Render(request, color, letra, titulo, navegacion, contenido, adicional)
     return HttpResponse(rendered)
 
 
-
+# Informacion del about
 def about(request):
     titulo = "Informacion sobre la pagina web"
     contenido = info_about()
@@ -398,92 +409,42 @@ def about(request):
     return HttpResponse(rendered)
 
 
-
-
-def profile_xml_peor(request, user):
-    usuario = ConfiguracionUsuario.objects.get(user=user)
-
-    contenido = '<?xml version="1.0" encoding="utf-8"?>\n'
+# Perfil en xml
+def profile_xml(request, user):
     if request.method == "GET":
         escogidos = AlojamientoEscogido.objects.filter(user=user)
+        contenido = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        contenido += '<serviceList>Canal XML de \n\t' + user
         for escogido in escogidos:
             alojamiento = Alojamiento.objects.get(id=escogido.alojamiento_id)
             imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
             imagen = imagenes.url1
-            print type(alojamiento.nombre)
             nombre = alojamiento.nombre
-            print type(nombre)
-            #nombre = nombre.encode('utf-8')
-            print type(nombre)
-            contenido += '<service>\n'
-            contenido += '\t<basicData>\n'
-            contenido += '\t\t<name>\n\t\t\t' + nombre
-            contenido += '\t\t</name>\n'
-            contenido += '\t</basicData>\n'
-            contenido += '</service>\n'
+            descripcion = alojamiento.descripcion
+            direccion = alojamiento.direccion
+            web = alojamiento.web
+            categoria = alojamiento.categoria
+            subcategoria = alojamiento.subcategoria
+            contenido += '<service>'
+            contenido += '\t<basicData>'
+            contenido += '\t\t<name><![CDATA[ ' + nombre + '\t\t ]]></name>'
+            contenido += '\t\t<web>' + web + '\t\t</web>'
+            contenido += '\t\t<body><![CDATA[ ' + descripcion + '\t\t ]]></body>'
+            contenido += '\t</basicData>'
+            contenido += '\t<geoData>'
+            contenido += '\t\t<address>' + direccion + '\t\t</address>'
+            contenido += '\t</geoData>'
+            contenido += '\t<multimedia>' + '\t\t<media type="image">'
+            contenido += '\t\t<url>' + imagen + '\t\t</url>'
+            contenido += '\t\t</media>' + '\t</multimedia>'
+            contenido += '\t<extradata>' + '\t\t<categoria>'
+            contenido += '\t\t<item name="Categoria">' + categoria + '\t\t</item>' + '\t\t\t<subcategoria>'
+            contenido += '\t\t\t<item name="SubCategoria">' + subcategoria + '\t\t\t</item>'
+            contenido += '\t\t\t</subcategoria>' + '\t\t</categoria>' + '\t</extradata>'
+            contenido += '</service>'
 
+        contenido += '</serviceList>\n'
         return HttpResponse(contenido, content_type="text/xml")
 
-
-
-
-
-def profile_xml(request, user):
-    usuario = ConfiguracionUsuario.objects.get(user=user)
-
-    if request.method == "GET":
-        lista_alojamientos = []
-        #imagenes = []
-        escogidos = AlojamientoEscogido.objects.filter(user=user)
-        for escogido in escogidos:
-            alojamiento = Alojamiento.objects.get(id=escogido.alojamiento_id)
-            imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
-            imagenes = imagenes.url1
-            lista_alojamientos += [(alojamiento)]
-
-        template = get_template('WesternNightLights/user.xml')
-        visualizacion = RequestContext(request, {'alojamientos': lista_alojamientos,
-                                                'usuario': usuario.user})
-        rendered = template.render(visualizacion)
-        return HttpResponse(rendered)
-
     else:
-        return HttpResponse("Metodo no permitido")
-
-
-
-def profile_xml1(request, user):
-    contenido = '<?xml version="1.0" encoding="utf-8"?>\n'
-    if request.method == "GET":
-        escogidos = AlojamientoEscogido.objects.filter(user=user)
-        for escogido in escogidos:
-            alojamiento = Alojamiento.objects.get(id=escogido.alojamiento_id)
-            imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
-            imagen = imagenes.url1
-            nombre = alojamiento.nombre
-            contenido += '<service>\n'
-            contenido += '\t<basicData>\n'
-            contenido += '\t\t<name>\n\t\t\t' + alojamiento.nombre
-            contenido += '\t\t</name>\n'
-            contenido += '\t</basicData>\n'
-            contenido += '</service>\n'
-
-        navegacion = Menu(False)
-        try:
-            usuarios = ConfiguracionUsuario.objects.all()
-            adicional = PagUsers(usuarios)
-        except ConfiguracionUsuario.DoesNotExist:
-            adicional = ""
-        user = ConfiguracionUsuario.objects.get(user=request.user)
-        usuario_actual = ""
-        if request.user.is_authenticated():
-            usuario_actual = request.user.username
-        template = get_template('WesternNightLights/index2.html')
-        visualizacion = RequestContext(request, {'titulo': user.titulo,
-                                            'menu_navegacion': navegacion,
-                                            'contenido': contenido})
-        rendered = template.render(visualizacion)
-        return HttpResponse(rendered)
-
-    else:
-        return HttpResponseNotFound('No funciona')
+        return HttpResponseNotFound('Metodo no valido')
