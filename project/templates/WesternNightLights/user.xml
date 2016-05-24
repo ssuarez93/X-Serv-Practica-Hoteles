@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+{% for alojamiento in alojamientos %}
+<service>
+		<basicData>
+				<name>
+					{{alojamiento.nombre}}
+				</name>
+				<email>
+					{{alojamiento.email}}
+				</email>
+				<phone>{{alojamiento.telefono}}</phone>
+				<title>
+					{{alojamiento.nombre}}
+				</title>
+				<body>
+					{{alojamiento.descripcion}}
+				</body>
+				<web>{{alojamiento.web}}</web>
+		</basicData>
+
+		<multimedia>
+			<media type="image">
+				<description/>
+				<url>
+
+				</url>
+			</media>
+		</multimedia>
+		<extradata>
+			<categorias>
+				<categoria>
+					<item name="Categoria">{{alojamiento.categoria}}</item>
+					<subcategorias>
+						<subcategoria>
+							<item name="SubCategoria">{{alojamiento.subcategoria}}</item>
+						</subcategoria>
+					</subcategorias>
+				</categoria>
+			</categorias>
+		</extradata>
+</service>
+{% endfor %}

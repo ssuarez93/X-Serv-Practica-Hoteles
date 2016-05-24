@@ -1,15 +1,12 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-<meta http-equiv="content-type" content="text/xml; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="/style.css" media="screen" title="style (screen)" />
+<meta http-equiv="content-type" content="text/xml; charset=iso-8859-1" />
 <title>Alojamientos Madrid</title>
 </head>
 <body>
 <div id="container">
-	<div id="header">
-		<h2> ALOJAMIENTOS EN MADRID </h2>
-	</div>
+
 	<div id="navigation">
 		<ul>
 			{{ menu_navegacion|safe }}
@@ -18,38 +15,8 @@
 
 	<div id="content">
 		<h3>{{ titulo|safe }}</h3>
-		<div id="news">
-			<table class="loginLayout" class="float-right" cellspacing="0" summary="">
-				<h3>Sesion</h3>
-				{% if autenticado %}
-				<p>Estas autenticado como {{ usuario }}. </p>
-				<ul>
-						<li><a href=/{{ usuario }}>Mi Perfil<a></li>
-						<li><a href=/logout>Cerrar sesion</a></li>
-				</ul>
-		{% else %}
-				<form method="post" action="/login">
-				{% csrf_token %}
-				<table>
-					<tr><td>Usuario</td>
-						<td>{{ form.usuario }}</td></tr>
-					<tr><td>Contraseña</td>
-						<td>{{ form.contrasenia }}</td></tr>
-				</table>
-				<input type="submit" value="Entrar" />
-				</form>
-		{% endif %}
-				</table>
-			<h3>Paginas personales:<h3>
-				{{ adicional|safe }}
-			</p>
-
-		</div>
 
 		<p>{{ contenido|safe }}</p>
-
-		<p class="mainText">Esta aplicación utiliza datos del portal de datos abiertos de la ciudad de Madrid
-			<a href="http://www.esmadrid.com/opendata/alojamientos_v1_es.xml">http://www.esmadrid.com/opendata/alojamientos_v1_es.xml</a></p>
 
 			<div id="footer">
 				<p> Copyright &copy; 2016 Sara Suárez Sánchez </p>

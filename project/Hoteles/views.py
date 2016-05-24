@@ -8,7 +8,7 @@ import xml_parser
 from xml.sax.handler import ContentHandler
 from xml.sax import make_parser
 from django.contrib import auth
-import requests, sys, string, urllib, urllib2, os.path
+import requests, sys, string, urllib, urllib2, os.path, math
 from django.utils.encoding import smart_str, smart_unicode
 from django.template.loader import get_template
 from django.template import Context, RequestContext
@@ -36,6 +36,11 @@ def login_correcto(request):
 
 @csrf_exempt
 def profile(request, user):
+    try:
+        offset = int(request.GET.get('offset'))
+    except TypeError:
+        offset = 0
+    num = int(offset)*10
     form_titulo = FormTitulo(user)
     form_pagina = FormPagina(user)
     usuario = ConfiguracionUsuario.objects.get(user=user)
@@ -46,7 +51,7 @@ def profile(request, user):
     if request.method == "GET":
         escogidos = AlojamientoEscogido.objects.filter(user=user)
         respuesta = ""
-        for escogido in escogidos:
+        for escogido in escogidos[num:num+10]:
             alojamiento = Alojamiento.objects.get(id=escogido.alojamiento_id)
             imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
             respuesta += "<br>" + str(escogido.fecha_eleccion) + ": " + \
@@ -54,7 +59,12 @@ def profile(request, user):
                         "</br>" + str(alojamiento.nombre) + "</a>" + "</br>" + \
                         '<img src="' + imagenes.url1 + '"width="200" height="150" border="2">' + \
                         "</br>" + alojamiento.direccion + "</br>" + "<a href='/" + "alojamientos/" + \
-                        str(alojamiento.id) + "'>Mas informacion</a></br>"
+                        str(alojamiento.id) + "'>Mas informacion</a></br></br>"
+        contador = 0
+        for escogido in escogidos:
+            contador = contador +1
+        for n in range (0, int(math.ceil(float(contador)/10.0))):
+            respuesta += "<a href='" + str(user) + "?offset=" + str(n) + "'>" + str(n+1) + " " + "</a>"
 
         if request.user.is_authenticated():
             if str(request.user.username) == str(user):
@@ -123,7 +133,7 @@ def principal(request):
             titulo = "Alojamientos más comentados:"
             lista_alojamientos = Alojamiento.objects.all().order_by('-num_comentarios')
             respuesta = form_act
-            for alojamiento in lista_alojamientos[num:num+9]:
+            for alojamiento in lista_alojamientos[num:num+10]:
                 if int(alojamiento.num_comentarios) > 0:
                     imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
                 #    web = unicode.encode(alojamiento.web)
@@ -136,12 +146,10 @@ def principal(request):
             for alojamiento in lista_alojamientos:
                 if alojamiento.num_comentarios > 0:
                     contador = contador +1
-            print contador
-            for n in range (0, int(round(float(contador)/10.0))):
+            for n in range (0, int(math.ceil(float(contador)/10.0))):
                 respuesta += "<a href='/" + "index.html?offset=" + str(n) + "'>" + str(n+1) + " " + "</a>"
 
         except Alojamiento.DoesNotExist:
-            print "EL alojamiento no existe"
             respuesta = ("No hay alojamientos disponibles, debe usted actualizar dichos alojamientos")
 
         navegacion = Menu(True)
@@ -273,13 +281,11 @@ def aloj_id(request, id):
                                         categoria=alojamiento.categoria, subcategoria=alojamiento.subcategoria,
                                         num_visitas=num_visitas, num_comentarios=alojamiento.num_comentarios)
         guardar_alojamiento.save()
-        web = unicode.encode(alojamiento.web)
-        web = web.encode('utf-8')
-        contenido = str(alojamiento.descripcion) + \
+
+        contenido = alojamiento.descripcion + \
                     alojamiento.direccion + '</br>' + \
                     '<br>' + str(alojamiento.telefono) + '</br>' + "<a href='" + \
-                    web + "'>" + web + "</a>"
-                    #str(alojamiento.web) + "'>" + str(alojamiento.web) + "</a>"
+                    str(alojamiento.web) + "'>" + str(alojamiento.web) + "</a>"
 
         contenido += respuesta + form_idioma
         alojamiento = Alojamiento.objects.get(id=id)
@@ -319,19 +325,27 @@ def aloj_id(request, id):
             aloj_id = id
             fecha = str(datetime.now())
             fecha = fecha.split('.')[0]
-            escogido_nuevo = AlojamientoEscogido(user=user, alojamiento_id=id, fecha_eleccion=fecha)
-            escogido_nuevo.save()
-            contenido = "Alojamiento escogido correctamente" + \
-                        '<meta http-equiv="refresh" content="2;url=' '" />'
+            try:
+                AlojamientoEscogido.objects.get(alojamiento_id=id)
+                contenido = "Ya habias seleccionado este alojamiento" + \
+                            '<meta http-equiv="refresh" content="1;url=' '" />'
+            except AlojamientoEscogido.DoesNotExist:
+                escogido_nuevo = AlojamientoEscogido(user=user, alojamiento_id=id, fecha_eleccion=fecha)
+                escogido_nuevo.save()
+                contenido = "Alojamiento escogido correctamente" + \
+                            '<meta http-equiv="refresh" content="1;url=' '" />'
 
         elif request.POST.get("tipo") == "idioma":
             idioma =  request.POST.get("Idioma")
             alojamiento = Alojamiento.objects.get(id=id)
             nombre = alojamiento.nombre
             (nombre, direc, email, telefono, descripcion, web) = EnOtroIdioma(nombre, int(idioma))
-            contenido = str(descripcion) + str(direc) + '</br>' + \
-                        '<br>' + str(telefono) + '</br>' + "<a href='" + \
-                        web + "'>" + web + "</a>"
+            if nombre != "error":
+                contenido = descripcion + direc + '</br>' + \
+                            '<br>' + str(telefono) + '</br>' + "<a href='" + \
+                            str(web) + "'>" + str(web) + "</a>"
+            else:
+                contenido = "<h4>No se dispone de la informacion de este alojamiento en frances</h4>"
 
             contenido += respuesta + form_idioma
             if request.user.is_authenticated():
@@ -385,54 +399,91 @@ def about(request):
 
 
 
-def profile_xml(request, user):
-    usuario = ConfiguracionUsuario.objects.get(user=user)
-    titulo = usuario.titulo
-    if titulo == "Pagina de":
-        titulo = "Pagina de " + str(user)
 
+def profile_xml_peor(request, user):
+    usuario = ConfiguracionUsuario.objects.get(user=user)
+
+    contenido = '<?xml version="1.0" encoding="utf-8"?>\n'
     if request.method == "GET":
         escogidos = AlojamientoEscogido.objects.filter(user=user)
-        respuesta = '<?xml version="1.0" encoding="UTF-8"?>'
         for escogido in escogidos:
             alojamiento = Alojamiento.objects.get(id=escogido.alojamiento_id)
             imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
-            respuesta += '<serviceList></br>'
-            respuesta += '<service>' + "<br>" + '	<name>' + str(alojamiento.nombre) + '</name>'
-            respuesta += "<br>" + '	<direccion>' + alojamiento.direccion + '</direccion>'
-            respuesta += "<br>" + '	<web>' + str(alojamiento.web) + '</web>'
-            respuesta += "<br>" + '	<url>' + imagenes.url1 + '</url><br>' + '</service>'
+            imagen = imagenes.url1
+            print type(alojamiento.nombre)
+            nombre = alojamiento.nombre
+            print type(nombre)
+            #nombre = nombre.encode('utf-8')
+            print type(nombre)
+            contenido += '<service>\n'
+            contenido += '\t<basicData>\n'
+            contenido += '\t\t<name>\n\t\t\t' + nombre
+            contenido += '\t\t</name>\n'
+            contenido += '\t</basicData>\n'
+            contenido += '</service>\n'
 
-        if request.user.is_authenticated():
-            contenido = "<p>Bienvenido, esta dentro de su pagina de usuario.<p>"
-            contenido += respuesta
-        else:
-            contenido = "<p>Estos son los alojamientos escogidos por este usuario: <p>"
-            contenido += respuesta
+        return HttpResponse(contenido, content_type="text/xml")
+
+
+
+
+
+def profile_xml(request, user):
+    usuario = ConfiguracionUsuario.objects.get(user=user)
+
+    if request.method == "GET":
+        lista_alojamientos = []
+        #imagenes = []
+        escogidos = AlojamientoEscogido.objects.filter(user=user)
+        for escogido in escogidos:
+            alojamiento = Alojamiento.objects.get(id=escogido.alojamiento_id)
+            imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
+            imagenes = imagenes.url1
+            lista_alojamientos += [(alojamiento)]
+
+        template = get_template('WesternNightLights/user.xml')
+        visualizacion = RequestContext(request, {'alojamientos': lista_alojamientos,
+                                                'usuario': usuario.user})
+        rendered = template.render(visualizacion)
+        return HttpResponse(rendered)
+
+    else:
+        return HttpResponse("Metodo no permitido")
+
+
+
+def profile_xml1(request, user):
+    contenido = '<?xml version="1.0" encoding="utf-8"?>\n'
+    if request.method == "GET":
+        escogidos = AlojamientoEscogido.objects.filter(user=user)
+        for escogido in escogidos:
+            alojamiento = Alojamiento.objects.get(id=escogido.alojamiento_id)
+            imagenes = Imagenes.objects.get(alojamiento=alojamiento.nombre)
+            imagen = imagenes.url1
+            nombre = alojamiento.nombre
+            contenido += '<service>\n'
+            contenido += '\t<basicData>\n'
+            contenido += '\t\t<name>\n\t\t\t' + alojamiento.nombre
+            contenido += '\t\t</name>\n'
+            contenido += '\t</basicData>\n'
+            contenido += '</service>\n'
+
         navegacion = Menu(False)
         try:
             usuarios = ConfiguracionUsuario.objects.all()
             adicional = PagUsers(usuarios)
         except ConfiguracionUsuario.DoesNotExist:
             adicional = ""
-        try:
-            user = ConfiguracionUsuario.objects.get(user=request.user)
-            color = user.color
-            letra = user.letra
-        except ConfiguracionUsuario.DoesNotExist:
-            color, letra = ("", "")
+        user = ConfiguracionUsuario.objects.get(user=request.user)
+        usuario_actual = ""
         if request.user.is_authenticated():
-            usuario = request.user.username
-
+            usuario_actual = request.user.username
         template = get_template('WesternNightLights/index2.html')
-        visualizacion = RequestContext(request, {'titulo': titulo,
-                                'color': color,
-                                'letra': letra,
-                                'usuario': usuario,
-                                'form': Login(),
-                                'menu_navegacion': navegacion,
-                                'contenido': contenido,
-                                'adicional': adicional,
-                                'autenticado': request.user.is_authenticated()})
+        visualizacion = RequestContext(request, {'titulo': user.titulo,
+                                            'menu_navegacion': navegacion,
+                                            'contenido': contenido})
         rendered = template.render(visualizacion)
         return HttpResponse(rendered)
+
+    else:
+        return HttpResponseNotFound('No funciona')

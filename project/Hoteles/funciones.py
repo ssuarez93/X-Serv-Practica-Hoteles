@@ -72,9 +72,9 @@ def ImprimirAloj(request, alojamientos, num):
 
 
 color_perfil = (
-    ('b', 'brown'),
+    ('b', 'marron'),
     ('y', 'amarillo'),
-    ('g', 'green'),
+    ('g', 'verde'),
 )
 
 letra_perfil = (
@@ -169,7 +169,7 @@ def PagUsers(users):
             titulo = "Pagina de " + str(user.user)
         else:
             titulo = user.titulo
-        adicional += "<p class='link'><a href='" + str(user.user) + "'>" + str(titulo) + \
+        adicional += "<p class='link'><a href='/" + str(user.user) + "'>" + str(titulo) + \
                     "</a>" + ":   " + str(user.user) + "</p>"
     return adicional
 
@@ -191,10 +191,14 @@ def FormIdioma(id):
     return respuesta
 
 
-def EnOtroIdioma(nombre, num):
+def EnOtroIdioma(name, num):
     lista_alojamientos = xml_parser.parse(num) # Por defecto, 1 es español, 2 es inglés y 3 es francés
+    (nombre, direc, email, telefono, descripcion, web) = ('', '', '', '', '', '')
+    Encontrado = False
     for alojamiento in lista_alojamientos:
-        if alojamiento['name'] == nombre:
+        if (alojamiento['name'] == name):
+            print "ENTRO en True"
+            Encontrado = True
             direc = alojamiento['address'] + '. ' + alojamiento['zipcode'] + '. ' + \
                     alojamiento['subAdministrativeArea'] + '. (' + alojamiento['latitude'] + ', ' + \
                     alojamiento['longitude'] + '). ' + alojamiento['country'] + '.'
@@ -203,6 +207,9 @@ def EnOtroIdioma(nombre, num):
             telefono = alojamiento['phone']
             descripcion = alojamiento['body']
             web = alojamiento['web']
+    if Encontrado == False:
+        print "ENTRO en False"
+        nombre = 'error'
     return (nombre, direc, email, telefono, descripcion, web)
 
 

@@ -8,5 +8,4 @@ Resumen de las peculiaridades que se quieran mencionar sobre lo implementado en 
 Lista de funcionalidades opcionales que se hayan implementado, y breve descripción de cada una: Ninguna
 URL del vídeo demostración de la funcionalidad básica: No se ha podido realizar captura de pantalla con las aplicaciones indicadas ya que se pixelaba mucho e iba muy muy lento al verse.
 https://www.youtube.com/watch?v=2uHU6n1dsdI&feature=youtu.be
-https://youtu.be/2uHU6n1dsdI
-URL del vídeo demostración de la funcionalidad optativa, si se ha realizado funcionalidad optativa: Ninguna.
+URL del vídeo demostración de la funcionalidad optativa, si se ha realizado funcionalidad optativa: Número visitas, se uede ver en el vídeo de funcionalidad básica.
