@@ -197,7 +197,6 @@ def EnOtroIdioma(name, num):
     Encontrado = False
     for alojamiento in lista_alojamientos:
         if (alojamiento['name'] == name):
-            print "ENTRO en True"
             Encontrado = True
             direc = alojamiento['address'] + '. ' + alojamiento['zipcode'] + '. ' + \
                     alojamiento['subAdministrativeArea'] + '. (' + alojamiento['latitude'] + ', ' + \

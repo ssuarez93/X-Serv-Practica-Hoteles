@@ -28,7 +28,7 @@ urlpatterns = patterns('',
     url(r'^alojamientos/(\d+)$', 'Hoteles.views.aloj_id'),
     url(r'^$', 'Hoteles.views.principal'),
     url(r'^index.html$', 'Hoteles.views.principal'),
-    url(r'/?(.*)/xml', 'Hoteles.views.profile_xml'),
+    url(r'^(.*)/xml$', 'Hoteles.views.profile_xml'),
     url(r'^(.*)$', 'Hoteles.views.profile')
 
 )
