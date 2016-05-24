@@ -208,7 +208,6 @@ def EnOtroIdioma(name, num):
             descripcion = alojamiento['body']
             web = alojamiento['web']
     if Encontrado == False:
-        print "ENTRO en False"
         nombre = 'error'
     return (nombre, direc, email, telefono, descripcion, web)
 
